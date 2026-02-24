@@ -24,8 +24,7 @@ node {
             # Download JUnit jar if not already present
             if [ ! -f junit-platform-console-standalone.jar ]; then
                 echo "Downloading JUnit..."
-                curl -L -o junit-platform-console-standalone.jar \
-                https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
+                curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
             fi
 
             # Compile test files
