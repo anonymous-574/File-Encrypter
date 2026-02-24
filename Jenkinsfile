@@ -1,8 +1,6 @@
 node {
     try {
         stage('Checkout') {
-            // This is usually automatic when you use "Pipeline script from SCM"
-            // but it's good to be explicit sometimes
             checkout scm
         }
 
@@ -32,19 +30,17 @@ node {
 
         stage('Test') {
             sh '''
-                set -e  # exit on any error
+                set -e
                 
                 echo "Running JUnit tests for File-Encrypter..."
                 cd "Password Protection" || { echo "Cannot cd to Password Protection"; exit 1; }
                 
-                # Always clean any potentially corrupted JUnit jar
                 rm -f junit-platform-console-standalone*.jar
                 
                 echo "Downloading fresh JUnit Platform Console Standalone..."
                 curl -L --fail --show-error -o junit-platform-console-standalone.jar \
                     https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.2/junit-platform-console-standalone-1.10.2.jar
                 
-                # Quick sanity check
                 if [ ! -s junit-platform-console-standalone.jar ]; then
                     echo "ERROR: Downloaded JUnit JAR is empty or missing"
                     exit 1
@@ -53,7 +49,6 @@ node {
                 echo "Downloaded JUnit JAR size:"
                 ls -lh junit-platform-console-standalone.jar
                 
-                # Compile tests
                 mkdir -p test-build
                 javac -cp "junit-platform-console-standalone.jar:build" \
                       -d test-build test/*.java
@@ -61,7 +56,6 @@ node {
                 echo "Compiled test classes:"
                 ls -R test-build
                 
-                # Run tests
                 java -jar junit-platform-console-standalone.jar \
                     --class-path "build:test-build" \
                     --scan-classpath \
@@ -78,7 +72,6 @@ node {
                 
                 mkdir -p ../artifacts
                 
-                # Simple JAR with all compiled classes
                 jar cfe ../artifacts/FileEncrypter.jar Main -C build .
                 
                 echo "Artifact created:"
@@ -92,8 +85,10 @@ node {
         currentBuild.result = 'FAILURE'
         throw e
     } finally {
-        // Optional: archive test results / artifacts even on failure
+        // Archive the JAR (even if tests or something else failed earlier)
         archiveArtifacts artifacts: 'artifacts/*.jar', allowEmptyArchive: true
-        junit 'test-reports/*.xml', allowEmptyResults: true
+        
+        // Publish JUnit results — correct scripted syntax
+        junit testResults: 'test-reports/*.xml', allowEmptyResults: true
     }
 }
